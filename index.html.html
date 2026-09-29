@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>26-B Dars Jadvali</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-nav {
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glow-bg {
+      position: fixed;
+      width: 700px;
+      height: 700px;
+      border-radius: 50%;
+      filter: blur(160px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.18;
+    }
+    ::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.8);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(99, 102, 241, 0.5);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(99, 102, 241, 0.8);
+    }
+  </style>
+
+  <!-- 🔒 KODNI KO'RISHNI BLOKLASH SKRIPTI -->
+  <script>
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (
+        e.keyCode === 123 || 
+        (e.ctrlKey && e.keyCode === 85) || 
+        (e.ctrlKey && e.shiftKey && e.keyCode === 73) || 
+        (e.ctrlKey && e.shiftKey && e.keyCode === 74) || 
+        (e.ctrlKey && e.keyCode === 83)
+      ) {
+        e.preventDefault();
+        alert("Sayt kodlarini ko'rish taqiqlangan! 🚫");
+      }
+    });
+  </script>
+</head>
+<body class="bg-[#070A12] text-slate-100 min-h-screen p-4 md:p-10 relative overflow-x-hidden">
+
+  <!-- Glow Backgrounds -->
+  <div class="glow-bg bg-indigo-600 -top-40 -left-40"></div>
+  <div class="glow-bg bg-purple-600 top-1/2 -right-40"></div>
+  <div class="glow-bg bg-blue-600 -bottom-40 left-1/3"></div>
+
+  <div id="root" class="relative z-10"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const ADMIN_PASSWORD = "1234";
+
+    const SUPABASE_URL = "https://axvveetilrogisvptgbz.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4dnZlZXRpbHJvZ2lzdnB0Z2J6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2NDE3NzksImV4cCI6MjEwNTIxNzc3OX0.t_6SIl6IG7FhBRN6KShodpcL46Czv6snvruGu3Cw-ZE";
+
+    const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+    const timeSlots = [
+      { num: 1, start: "08:30", end: "09:15" },
+      { num: 2, start: "09:20", end: "10:05" },
+      { num: 3, start: "10:10", end: "10:55" },
+      { num: 4, start: "11:00", end: "11:45" },
+      { num: 5, start: "11:50", end: "12:35" },
+      { num: 6, start: "13:30", end: "14:15" },
+      { num: 7, start: "14:20", end: "15:05" },
+      { num: 8, start: "15:10", end: "15:55" },
+      { num: 9, start: "16:00", end: "16:45" },
+      { num: 10, start: "17:00", end: "17:45" }
+    ];
+
+    const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+
+    const initialSchedule = [
+      // Monday (26-B)
+      { id: 1, day: "Monday", num: 1, time: "8:30-9:15", subject: "Counseling", teacher: "G. Nortojiyeva", specialist: "Counselor", room: "R5", homework: "" },
+      { id: 2, day: "Monday", num: 2, time: "9:20-10:05", subject: "Uzbek A", teacher: "M. Yusubjonova", specialist: "Language", room: "R5", homework: "" },
+      { id: 3, day: "Monday", num: 3, time: "10:10-10:55", subject: "Computer Sci SL", teacher: "M. Urinboev", specialist: "IT / CS", room: "CS Lab", homework: "" },
+      { id: 4, day: "Monday", num: 4, time: "11:00-11:45", subject: "English B", teacher: "Sh. Tagaev", specialist: "Language", room: "R6", homework: "" },
+      { id: 5, day: "Monday", num: 5, time: "11:50-12:35", subject: "Maths AA SL", teacher: "R. Yusupov", specialist: "Mathematics", room: "R6", homework: "" },
+      { id: 6, day: "Monday", num: 6, time: "13:30-14:15", subject: "English B", teacher: "E. Ramos", specialist: "Language", room: "R3", homework: "" },
+      { id: 7, day: "Monday", num: 7, time: "14:20-15:05", subject: "PE", teacher: "Jonibek", specialist: "Sports", room: "Sports hall", homework: "" },
+      { id: 8, day: "Monday", num: 8, time: "15:10-15:55", subject: "Chemistry SL", teacher: "G. Nortojiyeva", specialist: "Science", room: "Chem Lab", homework: "" },
+      { id: 9, day: "Monday", num: 9, time: "16:00-16:45", subject: "Global Politics SL", teacher: "S. Askarov", specialist: "Humanities", room: "R6", homework: "" },
+      { id: 10, day: "Monday", num: 10, time: "17:00-17:45", subject: "Uzbek A", teacher: "M. Yusubjonova", specialist: "Language", room: "R5", homework: "" },
+
+      // Tuesday (26-B)
+      { id: 11, day: "Tuesday", num: 1, time: "8:30-9:15", subject: "Maths AA SL", teacher: "R. Yusupov", specialist: "Mathematics", room: "R5", homework: "" },
+      { id: 12, day: "Tuesday", num: 2, time: "9:20-10:05", subject: "Physics", teacher: "S. Gaffarov", specialist: "Science", room: "Phy Lab", homework: "" },
+      { id: 13, day: "Tuesday", num: 3, time: "10:10-10:55", subject: "English B", teacher: "Sh. Tagaev", specialist: "Language", room: "R7", homework: "" },
+      { id: 14, day: "Tuesday", num: 4, time: "11:00-11:45", subject: "Physics", teacher: "S. Gaffarov", specialist: "Science", room: "Phy Lab", homework: "" },
+      { id: 15, day: "Tuesday", num: 5, time: "11:50-12:35", subject: "Computer Sci SL", teacher: "M. Urinboev", specialist: "IT / CS", room: "CS Lab", homework: "" },
+      { id: 16, day: "Tuesday", num: 6, time: "13:30-14:15", subject: "Chemistry SL", teacher: "G. Nortojiyeva", specialist: "Science", room: "Chem Lab", homework: "" },
+      { id: 17, day: "Tuesday", num: 7, time: "14:20-15:05", subject: "Economics SL", teacher: "I. Akhmedova", specialist: "Economics", room: "R6", homework: "" },
+      { id: 18, day: "Tuesday", num: 8, time: "15:10-15:55", subject: "Counseling", teacher: "K. Umarjonova", specialist: "Counselor", room: "R6", homework: "" },
+      { id: 19, day: "Tuesday", num: 9, time: "16:00-16:45", subject: "Maths AA SL", teacher: "R. Yusupov", specialist: "Mathematics", room: "R6", homework: "" },
+      { id: 20, day: "Tuesday", num: 10, time: "17:00-17:45", subject: "History", teacher: "Sh. Umarov", specialist: "Humanities", room: "R6", homework: "" },
+
+      // Wednesday (26-B)
+      { id: 21, day: "Wednesday", num: 1, time: "8:30-9:15", subject: "Global Politics SL", teacher: "S. Askarov", specialist: "Humanities", room: "R5", homework: "" },
+      { id: 22, day: "Wednesday", num: 2, time: "9:20-10:05", subject: "Global Politics SL", teacher: "S. Askarov", specialist: "Humanities", room: "R6", homework: "" },
+      { id: 23, day: "Wednesday", num: 3, time: "10:10-10:55", subject: "Uzbek A", teacher: "M. Yusubjonova", specialist: "Language", room: "R5", homework: "" },
+      { id: 24, day: "Wednesday", num: 4, time: "11:00-11:45", subject: "TOK", teacher: "Sh. Umarov", specialist: "Theory of Knowledge", room: "R6", homework: "" },
+      { id: 25, day: "Wednesday", num: 5, time: "11:50-12:35", subject: "English B", teacher: "E. Ramos", specialist: "Language", room: "R5", homework: "" },
+      { id: 26, day: "Wednesday", num: 6, time: "13:30-14:15", subject: "Maths AA SL", teacher: "R. Yusupov", specialist: "Mathematics", room: "R6", homework: "" },
+      { id: 27, day: "Wednesday", num: 7, time: "14:20-15:05", subject: "German / French", teacher: "Sohiba / Kasimova", specialist: "Languages", room: "R5", homework: "" },
+      { id: 28, day: "Wednesday", num: 8, time: "15:10-15:55", subject: "Uzbek A", teacher: "M. Yusubjonova", specialist: "Language", room: "R6", homework: "" },
+      { id: 29, day: "Wednesday", num: 9, time: "16:00-16:45", subject: "IELTS (optional)", teacher: "P. Alijonova", specialist: "IELTS Trainer", room: "R5", homework: "" },
+      { id: 30, day: "Wednesday", num: 10, time: "17:00-17:45", subject: "French (combined)", teacher: "Kasimova", specialist: "Language", room: "R5", homework: "" },
+
+      // Thursday (26-B)
+      { id: 31, day: "Thursday", num: 1, time: "8:30-9:15", subject: "Biology SL", teacher: "S. Zulu", specialist: "Science", room: "Bio Lab", homework: "" },
+      { id: 32, day: "Thursday", num: 2, time: "9:20-10:05", subject: "Uzbek A", teacher: "M. Yusubjonova", specialist: "Language", room: "R6", homework: "" },
+      { id: 33, day: "Thursday", num: 3, time: "10:10-10:55", subject: "Computer Sci SL", teacher: "M. Urinboev", specialist: "IT / CS", room: "CS Lab", homework: "" },
+      { id: 34, day: "Thursday", num: 4, time: "11:00-11:45", subject: "IELTS (optional)", teacher: "P. Alijonova", specialist: "IELTS Trainer", room: "R5", homework: "" },
+      { id: 35, day: "Thursday", num: 5, time: "11:50-12:35", subject: "Maths AA SL", teacher: "R. Yusupov", specialist: "Mathematics", room: "R6", homework: "" },
+      { id: 36, day: "Thursday", num: 6, time: "13:30-14:15", subject: "Chemistry SL", teacher: "G. Nortojiyeva", specialist: "Science", room: "Chem Lab", homework: "" },
+      { id: 37, day: "Thursday", num: 7, time: "14:20-15:05", subject: "Physics", teacher: "S. Gaffarov", specialist: "Science", room: "Phy Lab", homework: "" },
+      { id: 38, day: "Thursday", num: 8, time: "15:10-15:55", subject: "History", teacher: "Sh. Umarov", specialist: "Humanities", room: "R6", homework: "" },
+      { id: 39, day: "Thursday", num: 9, time: "16:00-16:45", subject: "English B", teacher: "Sh. Tagaev", specialist: "Language", room: "R6", homework: "" },
+      { id: 40, day: "Thursday", num: 10, time: "17:00-17:45", subject: "PE", teacher: "Jonibek", specialist: "Sports", room: "Sports hall", homework: "" },
+
+      // Friday (26-B)
+      { id: 41, day: "Friday", num: 1, time: "8:30-9:15", subject: "Counseling", teacher: "K. Umarjonova", specialist: "Counselor", room: "R6", homework: "" },
+      { id: 42, day: "Friday", num: 2, time: "9:20-10:05", subject: "Biology SL", teacher: "S. Zulu", specialist: "Science", room: "Bio Lab", homework: "" },
+      { id: 43, day: "Friday", num: 3, time: "10:10-10:55", subject: "English B", teacher: "Sh. Tagaev", specialist: "Language", room: "R6", homework: "" },
+      { id: 44, day: "Friday", num: 4, time: "11:00-11:45", subject: "Maths AA SL", teacher: "R. Yusupov", specialist: "Mathematics", room: "R6", homework: "" },
+      { id: 45, day: "Friday", num: 5, time: "11:50-12:35", subject: "Chemistry SL", teacher: "G. Nortojiyeva", specialist: "Science", room: "Chem Lab", homework: "" },
+      { id: 46, day: "Friday", num: 6, time: "13:30-14:15", subject: "Biology SL", teacher: "S. Zulu", specialist: "Science", room: "Bio Lab", homework: "" },
+      { id: 47, day: "Friday", num: 7, time: "14:20-15:05", subject: "Research", teacher: "S. Askarov", specialist: "Research Supervisor", room: "R6", homework: "" },
+      { id: 48, day: "Friday", num: 8, time: "15:10-15:55", subject: "IELTS (optional)", teacher: "P. Alijonova", specialist: "IELTS Trainer", room: "R5", homework: "" },
+      { id: 49, day: "Friday", num: 9, time: "16:00-16:45", subject: "Chared", teacher: "J. Axmedov", specialist: "Instructor", room: "R6", homework: "" },
+      { id: 50, day: "Friday", num: 10, time: "17:00-17:45", subject: "German", teacher: "Sohiba", specialist: "Language", room: "R6", homework: "" }
+    ];
+
+    function App() {
+      const [schedule, setSchedule] = useState(initialSchedule);
+      const [editingId, setEditingId] = useState(null);
+      const [editForm, setEditForm] = useState({ subject: '', teacher: '', specialist: '', room: '', homework: '' });
+      const [notification, setNotification] = useState('');
+      const [currentTime, setCurrentTime] = useState(new Date());
+
+      const [isAdmin, setIsAdmin] = useState(false);
+      const [showModal, setShowModal] = useState(false);
+      const [inputPassword, setInputPassword] = useState('');
+      const [passwordError, setPasswordError] = useState('');
+
+      const allDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const todayName = allDays[new Date().getDay()];
+      const initialActiveDay = weekDays.includes(todayName) ? todayName : "Monday";
+      
+      const [selectedDay, setSelectedDay] = useState(initialActiveDay);
+
+      useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        if (supabase) {
+          fetchSchedule();
+        }
+        return () => clearInterval(timer);
+      }, []);
+
+      const showNotification = (msg) => {
+        setNotification(msg);
+        setTimeout(() => setNotification(''), 4000);
+      };
+
+      const fetchSchedule = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('schedule')
+            .select('*')
+            .order('id', { ascending: true });
+
+          if (!error && data && data.length > 0) {
+            setSchedule(data);
+          }
+        } catch (e) {
+          console.log("Fetch error:", e);
+        }
+      };
+
+      const handleLogin = (e) => {
+        e.preventDefault();
+        if (inputPassword === ADMIN_PASSWORD) {
+          setIsAdmin(true);
+          setShowModal(false);
+          setInputPassword('');
+          setPasswordError('');
+          showNotification("Admin rejimiga muvaffaqiyatli kirdingiz! 🔓");
+        } else {
+          setPasswordError("Noto'g'ri parol! Qayta urinib ko'ring.");
+        }
+      };
+
+      const handleLogout = () => {
+        setIsAdmin(false);
+        setEditingId(null);
+        showNotification("Admin rejimidan chiqildingiz! 🔒");
+      };
+
+      const handleEdit = (item) => {
+        setEditingId(item.id);
+        setEditForm({ 
+          subject: item.subject || '', 
+          teacher: item.teacher || '', 
+          specialist: item.specialist || '',
+          room: item.room || '',
+          homework: item.homework || ''
+        });
+      };
+
+      const saveItem = async (id) => {
+        const target = schedule.find((i) => i.id === id);
+        if (!target) return;
+
+        const updatedRow = { ...target, ...editForm };
+
+        const updatedSchedule = schedule.map((item) =>
+          item.id === id ? updatedRow : item
+        );
+        setSchedule(updatedSchedule);
+        setEditingId(null);
+
+        if (supabase) {
+          try {
+            const { error } = await supabase
+              .from('schedule')
+              .update({
+                subject: editForm.subject,
+                teacher: editForm.teacher,
+                specialist: editForm.specialist,
+                room: editForm.room,
+                homework: editForm.homework
+              })
+              .eq('id', id);
+
+            if (error) {
+              alert("Supabase Xatosi: " + error.message);
+            } else {
+              showNotification("Ma'lumotlar saqlandi! ✨");
+            }
+          } catch (err) {
+            console.error("Saqlashda xatolik:", err);
+          }
+        }
+      };
+
+      const parseTime = (tStr) => {
+        const [h, m] = tStr.split(':').map(Number);
+        return h * 3600 + m * 60;
+      };
+
+      const formatTimeDetailed = (totalSec) => {
+        if (totalSec <= 0) return "0m 00s qoldi";
+
+        const hours = Math.floor(totalSec / 3600);
+        const minutes = Math.floor((totalSec % 3600) / 60);
+        const seconds = totalSec % 60;
+
+        const parts = [];
+        if (hours > 0) parts.push(`${hours}h`);
+        if (minutes > 0 || hours > 0) parts.push(`${minutes}m`);
+        parts.push(`${seconds < 10 ? '0' : ''}${seconds}s`);
+
+        return parts.join(' ') + " qoldi";
+      };
+
+      const getDynamicTimerStyle = (diffSec) => {
+        const maxSec = 3600 * 2;
+        const ratio = Math.min(Math.max(diffSec / maxSec, 0), 1);
+
+        const r = Math.round(239 + (99 - 239) * ratio);
+        const g = Math.round(68 + (102 - 68) * ratio);
+        const b = Math.round(68 + (241 - 68) * ratio);
+
+        return {
+          color: `rgb(${r}, ${g}, ${b})`,
+          backgroundColor: `rgba(${r}, ${g}, ${b}, 0.12)`,
+          borderColor: `rgba(${r}, ${g}, ${b}, 0.25)`
+        };
+      };
+
+      // KUNLIK TAYMER MANTIQLARI (Har 23:59:59 da yangilanadi)
+      const getRowTimerStatus = (row) => {
+        const slot = timeSlots.find(s => s.num === row.num);
+        if (!slot) return { status: "none", text: "-" };
+
+        const nowSec = currentTime.getHours() * 3600 + currentTime.getMinutes() * 60 + currentTime.getSeconds();
+        const startSec = parseTime(slot.start);
+        const endSec = parseTime(slot.end);
+
+        // Tanlangan kun Bugungi kun bo'lsa
+        if (row.day === todayName) {
+          const prevSlot = timeSlots.find(s => s.num === row.num - 1);
+          const prevEndSec = prevSlot ? parseTime(prevSlot.end) : null;
+
+          if (nowSec >= startSec && nowSec < endSec) {
+            const remSec = endSec - nowSec;
+            const m = Math.floor(remSec / 60);
+            const s = remSec % 60;
+            return {
+              status: "active",
+              text: `Do ur lesson 📚 (${m}m ${s < 10 ? '0' : ''}${s}s)`
+            };
+          } 
+          else if (prevEndSec && nowSec >= prevEndSec && nowSec < startSec) {
+            const breakLeft = startSec - nowSec;
+            const m = Math.floor(breakLeft / 60);
+            const s = breakLeft % 60;
+            return {
+              status: "break",
+              text: `Tanaffus, damingni ol ☕ (${m}m ${s < 10 ? '0' : ''}${s}s)`
+            };
+          }
+          else if (nowSec < startSec) {
+            const diff = startSec - nowSec;
+            return {
+              status: "upcoming",
+              diffSec: diff,
+              text: formatTimeDetailed(diff)
+            };
+          } 
+          else {
+            return { status: "past", text: "Tugadi" };
+          }
+        } 
+        else {
+          // Boshqa kunlar uchun: Bugungi kun oxiri (23:59:59) gacha hisoblash
+          const endOfDaySec = (23 * 3600) + (59 * 60) + 59;
+          const diffTillMidnight = endOfDaySec - nowSec;
+
+          return {
+            status: "upcoming",
+            diffSec: diffTillMidnight,
+            text: `Bugun tugashiga: ${formatTimeDetailed(diffTillMidnight)}`
+          };
+        }
+      };
+
+      const filteredSchedule = schedule.filter(item => item.day === selectedDay);
+
+      return (
+        <div className="max-w-7xl mx-auto space-y-8">
+          
+          {/* Notification Toast */}
+          {notification && (
+            <div className="fixed top-6 right-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-7 py-4 rounded-2xl shadow-2xl font-bold z-50 animate-bounce flex items-center gap-3 border border-emerald-400/30 text-sm">
+              <span>{notification}</span>
+            </div>
+          )}
+
+          {/* Header Bar */}
+          <header className="glass-card rounded-3xl p-7 md:p-9 shadow-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border border-slate-800/80">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-500/30">
+                26
+              </div>
+              <div>
+                <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">
+                  26-B Dars Jadvali
+                </h1>
+                <p className="text-slate-400 text-xs md:text-sm font-medium mt-0.5">
+                  Al-Beruni International Boarding School
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-5 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-5 md:pt-0 border-slate-800/80">
+              <div className="bg-slate-900/90 border border-slate-800/80 px-5 py-2.5 rounded-2xl text-right shadow-inner">
+                <span className="text-[10px] text-slate-400 uppercase tracking-widest font-extrabold block">Bugungi kun</span>
+                <span className="text-base font-bold text-indigo-400">{todayName}</span>
+              </div>
+
+              {isAdmin ? (
+                <button
+                  onClick={handleLogout}
+                  className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-6 py-3 rounded-2xl text-xs font-bold transition-all duration-300 shadow-lg shadow-rose-500/10"
+                >
+                  Chiqish 🚪
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:opacity-90 text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-xl shadow-indigo-600/30 transition-all duration-300 border border-indigo-400/30"
+                >
+                  Admin Mode 🔑
+                </button>
+              )}
+            </div>
+          </header>
+
+          {/* Weekday Switcher Tabs */}
+          <div className="glass-nav p-2.5 rounded-2xl border border-slate-800/80 flex flex-wrap gap-2.5 shadow-xl">
+            {weekDays.map((day) => {
+              const isToday = day === todayName;
+              const isSelected = day === selectedDay;
+
+              return (
+                <button
+                  key={day}
+                  onClick={() => setSelectedDay(day)}
+                  className={`flex-1 min-w-[120px] py-3.5 px-5 rounded-xl font-extrabold text-xs md:text-sm transition-all duration-300 flex items-center justify-center gap-2.5 ${
+                    isSelected
+                      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xl shadow-indigo-500/25 border border-indigo-400/40 scale-[1.02]"
+                      : "bg-slate-900/40 hover:bg-slate-800/60 text-slate-400 hover:text-white border border-transparent"
+                  }`}
+                >
+                  <span>{day}</span>
+                  {isToday && (
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-lg shadow-emerald-400/60" title="Bugun"></span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Schedule Table (Keng va Ko'rimli Qatorlar bilan) */}
+          <div className="glass-card rounded-3xl overflow-hidden border border-slate-800/80 shadow-2xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-300">
+                <thead className="bg-slate-900/90 border-b border-slate-800/80 text-slate-400 uppercase text-[11px] tracking-wider font-extrabold">
+                  <tr>
+                    <th className="py-5 px-6 pl-8">#</th>
+                    <th className="py-5 px-6">Vaqt</th>
+                    <th className="py-5 px-6">Dars nomi</th>
+                    <th className="py-5 px-6">O'qituvchi</th>
+                    <th className="py-5 px-6">Specialist 🎓</th>
+                    <th className="py-5 px-6">Xona</th>
+                    <th className="py-5 px-6">Uy Vazifasi 📝</th>
+                    <th className="py-5 px-6">Holat / Taymer</th>
+                    {isAdmin && <th className="py-5 px-6 text-center pr-8">Amal</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {filteredSchedule.map((item) => {
+                    const timerStatus = getRowTimerStatus(item);
+
+                    return (
+                      <tr 
+                        key={item.id} 
+                        className={`transition-all duration-200 hover:bg-indigo-500/10 ${
+                          timerStatus.status === 'active' ? 'bg-indigo-500/15' : ''
+                        }`}
+                      >
+                        {/* Qator balandligi py-6 qilib oshirildi */}
+                        <td className="py-6 px-6 pl-8 font-black text-slate-500 text-base">{item.num}</td>
+                        <td className="py-6 px-6 font-mono text-xs font-bold text-slate-400 whitespace-nowrap">{item.time}</td>
+                        
+                        {editingId === item.id ? (
+                          <>
+                            <td className="p-3">
+                              <input
+                                type="text"
+                                value={editForm.subject}
+                                onChange={(e) => setEditForm({ ...editForm, subject: e.target.value })}
+                                className="bg-slate-900/90 border border-indigo-500/60 rounded-xl px-3.5 py-2 text-white w-full focus:outline-none text-xs font-semibold"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <input
+                                type="text"
+                                value={editForm.teacher}
+                                onChange={(e) => setEditForm({ ...editForm, teacher: e.target.value })}
+                                className="bg-slate-900/90 border border-indigo-500/60 rounded-xl px-3.5 py-2 text-white w-full focus:outline-none text-xs font-semibold"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <input
+                                type="text"
+                                value={editForm.specialist}
+                                placeholder="Specialist..."
+                                onChange={(e) => setEditForm({ ...editForm, specialist: e.target.value })}
+                                className="bg-slate-900/90 border border-purple-500/60 rounded-xl px-3.5 py-2 text-purple-300 w-full focus:outline-none text-xs font-semibold"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <input
+                                type="text"
+                                value={editForm.room}
+                                onChange={(e) => setEditForm({ ...editForm, room: e.target.value })}
+                                className="bg-slate-900/90 border border-indigo-500/60 rounded-xl px-3.5 py-2 text-white w-20 focus:outline-none text-xs font-semibold"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <input
+                                type="text"
+                                value={editForm.homework}
+                                placeholder="Uy vazifasi..."
+                                onChange={(e) => setEditForm({ ...editForm, homework: e.target.value })}
+                                className="bg-slate-900/90 border border-amber-500/60 rounded-xl px-3.5 py-2 text-amber-300 w-full focus:outline-none text-xs font-semibold"
+                              />
+                            </td>
+                            <td className="py-6 px-6 text-slate-600">-</td>
+                            <td className="py-6 px-6 text-center space-x-2 pr-8 whitespace-nowrap">
+                              <button
+                                onClick={() => saveItem(item.id)}
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md transition"
+                              >
+                                Saqlash 💾
+                              </button>
+                              <button
+                                onClick={() => setEditingId(null)}
+                                className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-xs font-bold transition"
+                              >
+                                Bekor qilish
+                              </button>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="py-6 px-6 font-extrabold text-white text-base tracking-wide whitespace-nowrap">
+                              {item.subject}
+                            </td>
+                            <td className="py-6 px-6 text-slate-300 font-semibold text-sm whitespace-nowrap">
+                              {item.teacher}
+                            </td>
+                            <td className="py-6 px-6 whitespace-nowrap">
+                              <span className="inline-flex items-center gap-1.5 bg-purple-500/10 text-purple-300 px-3.5 py-1.5 rounded-xl text-xs font-extrabold border border-purple-500/25 shadow-sm">
+                                🎓 {item.specialist || "General"}
+                              </span>
+                            </td>
+                            <td className="py-6 px-6 whitespace-nowrap">
+                              <span className="bg-slate-800/90 text-indigo-400 px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold border border-slate-700/80 shadow-inner">
+                                {item.room}
+                              </span>
+                            </td>
+                            <td className="py-6 px-6 max-w-xs">
+                              {item.homework ? (
+                                <span className="text-amber-300 text-xs font-semibold bg-amber-500/10 px-3.5 py-2 rounded-xl border border-amber-500/20 block truncate shadow-sm" title={item.homework}>
+                                  📌 {item.homework}
+                                </span>
+                              ) : (
+                                <span className="text-slate-600 text-xs italic">Vazifa yo'q</span>
+                              )}
+                            </td>
+
+                            <td className="py-6 px-6 whitespace-nowrap">
+                              {timerStatus.status === "active" && (
+                                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 animate-pulse shadow-lg shadow-emerald-500/10">
+                                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                  {timerStatus.text}
+                                </span>
+                              )}
+                              {timerStatus.status === "break" && (
+                                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30 animate-pulse shadow-lg shadow-purple-500/10">
+                                  ☕ {timerStatus.text}
+                                </span>
+                              )}
+                              {timerStatus.status === "upcoming" && (
+                                <span 
+                                  style={getDynamicTimerStyle(timerStatus.diffSec)}
+                                  className="inline-flex items-center px-4 py-2 rounded-2xl text-xs font-mono font-bold border transition-colors duration-500 shadow-sm"
+                                >
+                                  ⏳ {timerStatus.text}
+                                </span>
+                              )}
+                              {timerStatus.status === "past" && (
+                                <span className="text-slate-500 text-xs font-bold bg-slate-900/60 px-3.5 py-1.5 rounded-xl border border-slate-800">
+                                  ✓ Tugadi
+                                </span>
+                              )}
+                            </td>
+
+                            {isAdmin && (
+                              <td className="py-6 px-6 text-center pr-8 whitespace-nowrap">
+                                <button
+                                  onClick={() => handleEdit(item)}
+                                  className="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200"
+                                >
+                                  Tahrirlash ✏️
+                                </button>
+                              </td>
+                            )}
+                          </>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Admin Modal */}
+          {showModal && (
+            <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+              <div className="glass-card border border-slate-800 rounded-3xl p-8 w-full max-w-md shadow-2xl space-y-6">
+                <div className="text-center space-y-2">
+                  <div className="w-14 h-14 bg-indigo-600/20 border border-indigo-500/30 rounded-2xl flex items-center justify-center text-indigo-400 mx-auto text-2xl">
+                    🔐
+                  </div>
+                  <h3 className="text-2xl font-black text-white">Admin Rejimiga Kirish</h3>
+                  <p className="text-slate-400 text-xs">
+                    Dars jadvaliga o'zgartirish kiritish uchun admin parolini kiriting.
+                  </p>
+                </div>
+
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <input
+                    type="password"
+                    placeholder="Parol kiriting..."
+                    value={inputPassword}
+                    onChange={(e) => setInputPassword(e.target.value)}
+                    className="w-full bg-slate-900/90 border border-slate-700/80 rounded-2xl px-5 py-3.5 text-white focus:outline-none focus:border-indigo-500 text-sm font-semibold transition"
+                    autoFocus
+                  />
+
+                  {passwordError && (
+                    <p className="text-rose-400 text-xs font-bold text-center">{passwordError}</p>
+                  )}
+
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowModal(false);
+                        setPasswordError('');
+                        setInputPassword('');
+                      }}
+                      className="w-1/2 py-3 rounded-2xl text-slate-400 hover:bg-slate-800/80 text-xs font-bold transition"
+                    >
+                      Bekor qilish
+                    </button>
+                    <button
+                      type="submit"
+                      className="w-1/2 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 text-white rounded-2xl text-xs font-bold shadow-lg shadow-indigo-600/30 transition"
+                    >
+                      Kirish 🔓
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
