@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>26-B Class Schedule & Portal</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- React & Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #080c14;
+      color: #f8fafc;
+    }
+
+    .schedule-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 520px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .schedule-card.active-lesson {
+      border-color: #10b981;
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
+    }
+
+    .schedule-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.25);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+  </style>
+
+  <!-- Anti-Scraping / Inspection block -->
+  <script>
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74))) {
+        e.preventDefault();
+      }
+    });
+  </script>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+  <div id="root" class="max-w-7xl mx-auto"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+
+    const initialSchedule = {
+      Monday: [
+        { id: 1, time: "08:30-09:15", start: "08:30", end: "09:15", subject: "1. Counseling", teacher: "G. Nortojiyeva", specialist: "Counselor", room: "R5", homework: "Shaxsiy reja tuzish va topshirish", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&auto=format&fit=crop" },
+        { id: 2, time: "09:20-10:05", start: "09:20", end: "10:05", subject: "2. Uzbek A", teacher: "M. Yusubjonova", specialist: "Language A", room: "R5", homework: "Insho tayyorlash (300 so'z)", img: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600&auto=format&fit=crop" },
+        { id: 3, time: "10:10-10:55", start: "10:10", end: "10:55", subject: "3. Computer Science", teacher: "M. Urinboev", specialist: "IT / CS", room: "CS Lab", homework: "Python sikllariga oid 5 masala", img: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop" },
+        { id: 4, time: "11:00-11:45", start: "11:00", end: "11:45", subject: "4. English B", teacher: "Sh. Tagaev", specialist: "Language B", room: "R6", homework: "Reading Passage 4 va lug'at yodlash", img: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=600&auto=format&fit=crop" },
+        { id: 5, time: "11:50-12:35", start: "11:50", end: "12:35", subject: "5. Maths AA SL", teacher: "R. Yusupov", specialist: "Mathematics", room: "R6", homework: "Integration misollari №12-18", img: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&auto=format&fit=crop" },
+        { id: 6, time: "13:30-14:15", start: "13:30", end: "14:15", subject: "6. Physics", teacher: "S. Gaffarov", specialist: "Science", room: "Phy Lab", homework: "Laboratoriya hisoboti", img: "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=600&auto=format&fit=crop" },
+        { id: 7, time: "14:20-15:05", start: "14:20", end: "15:05", subject: "7. Chemistry SL", teacher: "G. Nortojiyeva", specialist: "Science", room: "Chem Lab", homework: "Reaksiya tenglamalari", img: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=600&auto=format&fit=crop" },
+        { id: 8, time: "15:10-15:55", start: "15:10", end: "15:55", subject: "8. Economics SL", teacher: "I. Akhmedova", specialist: "Economics", room: "R6", homework: "Demand case-study", img: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&auto=format&fit=crop" },
+        { id: 9, time: "16:00-16:45", start: "16:00", end: "16:45", subject: "9. Global Politics", teacher: "S. Askarov", specialist: "Humanities", room: "R5", homework: "Tahliliy maqola o'qish", img: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600&auto=format&fit=crop" },
+        { id: 10, time: "16:50-17:35", start: "16:50", end: "17:35", subject: "10. TOK", teacher: "Sh. Umarov", specialist: "TOK Instructor", room: "R6", homework: "TOK Essay rejasi", img: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=600&auto=format&fit=crop" }
+      ],
+      Tuesday: [],
+      Wednesday: [],
+      Thursday: [],
+      Friday: []
+    };
+
+    function App() {
+      const [schedule, setSchedule] = useState(() => {
+        const saved = localStorage.getItem('26b_schedule_smart_timer');
+        return saved ? JSON.parse(saved) : initialSchedule;
+      });
+
+      const [selectedDay, setSelectedDay] = useState("Monday");
+      const [activeModalItem, setActiveModalItem] = useState(null);
+      const [editingItem, setEditingItem] = useState(null);
+      const [isAdmin, setIsAdmin] = useState(false);
+      const [now, setNow] = useState(new Date());
+
+      useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 1000);
+        return () => clearInterval(timer);
+      }, []);
+
+      useEffect(() => {
+        localStorage.setItem('26b_schedule_smart_timer', JSON.stringify(schedule));
+      }, [schedule]);
+
+      // Vaqtni hisoblash yordamchi funksiyalari
+      const timeToMinutes = (timeStr) => {
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+      };
+
+      const formatDiff = (diffSec) => {
+        if (diffSec <= 0) return "00:00:00";
+        const h = Math.floor(diffSec / 3600);
+        const m = Math.floor((diffSec % 3600) / 60);
+        const s = diffSec % 60;
+        return `${h > 0 ? h + 'h ' : ''}${m < 10 ? '0' : ''}${m}m ${s < 10 ? '0' : ''}${s}s`;
+      };
+
+      // Har bir dars uchun aqlli taymer va holatni aniqlash
+      const getLessonStatus = (item, index, list) => {
+        const currentMin = now.getHours() * 60 + now.getMinutes();
+        const currentSec = now.getSeconds();
+        const nowTotalSec = currentMin * 60 + currentSec;
+
+        const startMin = timeToMinutes(item.start);
+        const endMin = timeToMinutes(item.end);
+        const startSec = startMin * 60;
+        const endSec = endMin * 60;
+
+        // 1. Dars bo'layotgan bo'lsa
+        if (nowTotalSec >= startSec && nowTotalSec < endSec) {
+          const remaining = endSec - nowTotalSec;
+          return {
+            type: "active",
+            text: `⏳ Tugashiga: ${formatDiff(remaining)}`,
+            color: "text-emerald-400 font-bold bg-emerald-500/10 border-emerald-500/30"
+          };
+        }
+
+        // 2. Dars tugagan bo'lsa
+        if (nowTotalSec >= endSec) {
+          return {
+            type: "finished",
+            text: "✅ Dars tugadi",
+            color: "text-slate-500 bg-slate-800/50"
+          };
+        }
+
+        // 3. 5 daqiqalik qisqa tanaffus (oldingi dars va ushbu dars oralig'ida)
+        if (index > 0) {
+          const prevEndMin = timeToMinutes(list[index - 1].end);
+          const prevEndSec = prevEndMin * 60;
+          if (nowTotalSec >= prevEndSec && nowTotalSec < startSec) {
+            // Katta tanaffus (12:35 - 13:30) bo'lsa
+            if (startMin - prevEndMin > 15) {
+              return {
+                type: "big-break",
+                text: "🍕 Katta tanaffus: Damingni ol!",
+                color: "text-amber-400 font-bold bg-amber-500/10 border-amber-500/30 animate-pulse"
+              };
+            }
+            // 5 min qisqa tanaffus
+            return {
+              type: "short-break",
+              text: "🔔 Keyingi darsga tayyorlan!",
+              color: "text-amber-300 font-bold bg-amber-500/20 border-amber-500/40 animate-pulse"
+            };
+          }
+        }
+
+        // 4. Dars hali boshlanmagan bo'lsa (boshlanishiga qancha vaqt qolgani)
+        const remainingToStart = startSec - nowTotalSec;
+        return {
+          type: "upcoming",
+          text: `⏳ Boshlanishiga: ${formatDiff(remainingToStart)}`,
+          color: "text-indigo-400 font-mono bg-indigo-500/10 border-indigo-500/20"
+        };
+      };
+
+      const handleAdminToggle = () => {
+        if (isAdmin) {
+          setIsAdmin(false);
+        } else {
+          const pass = prompt("Admin parolini kiriting:");
+          if (pass === "1234") {
+            setIsAdmin(true);
+            alert("Admin rejasi yoqildi!");
+          } else if (pass !== null) {
+            alert("Noto'g'ri parol!");
+          }
+        }
+      };
+
+      const handleSaveEdit = (e) => {
+        e.preventDefault();
+        const updatedDaySchedule = (schedule[selectedDay] || []).map(item => 
+          item.id === editingItem.id ? editingItem : item
+        );
+
+        setSchedule({
+          ...schedule,
+          [selectedDay]: updatedDaySchedule
+        });
+
+        setEditingItem(null);
+      };
+
+      const currentSchedule = schedule[selectedDay] && schedule[selectedDay].length > 0 
+        ? schedule[selectedDay] 
+        : schedule.Monday;
+
+      return (
+        <div className="space-y-8 pb-12">
+          
+          {/* Header */}
+          <div className="text-center space-y-3">
+            <div className="flex justify-between items-center max-w-4xl mx-auto px-2">
+              <div className="bg-indigo-950/80 border border-indigo-500/30 px-3 py-1.5 rounded-xl text-xs font-mono font-bold text-indigo-300">
+                🕒 Real-time: {now.toLocaleTimeString()}
+              </div>
+
+              <button 
+                onClick={handleAdminToggle}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  isAdmin 
+                    ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30" 
+                    : "bg-slate-800 text-slate-300 hover:text-white border border-slate-700"
+                }`}
+              >
+                {isAdmin ? "🔒 Admin rejimini yopish" : "⚙️ Admin / Tahrirlash"}
+              </button>
+            </div>
+
+            <h1 className="text-3xl md:text-5xl font-extrabold bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
+              26-B Class Schedule
+            </h1>
+            <p className="text-slate-400 text-xs md:text-sm">
+              Jonli dars va tanaffus kuzatuvi
+            </p>
+          </div>
+
+          {/* Hafta Kunlari */}
+          <div className="flex justify-center flex-wrap gap-2 max-w-xl mx-auto bg-slate-900/90 p-2 rounded-2xl border border-slate-800 shadow-xl">
+            {weekDays.map((day) => (
+              <button
+                key={day}
+                onClick={() => setSelectedDay(day)}
+                className={`flex-1 min-w-[90px] py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
+                  selectedDay === day
+                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-105"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                }`}
+              >
+                {day}
+              </button>
+            ))}
+          </div>
+
+          {/* KARTA GRID */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+            {currentSchedule.map((item, index) => {
+              const status = getLessonStatus(item, index, currentSchedule);
+
+              return (
+                <div 
+                  key={item.id} 
+                  onClick={() => setActiveModalItem(item)}
+                  className={`schedule-card cursor-pointer relative ${status.type === 'active' ? 'active-lesson' : ''}`}
+                >
+                  {isAdmin && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingItem({...item});
+                      }}
+                      className="absolute top-2 right-2 bg-amber-500 hover:bg-amber-600 text-black font-bold px-2 py-1 rounded-lg text-xs z-20 shadow-lg"
+                    >
+                      ✏️ Tahrirlash
+                    </button>
+                  )}
+
+                  {/* 1. TEPADAN 40% FANA OID RASM */}
+                  <div className="relative h-[40%] w-full overflow-hidden bg-slate-800">
+                    <img 
+                      src={item.img} 
+                      alt={item.subject} 
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-black/30"></div>
+                    
+                    <div className="absolute top-2.5 left-2.5 bg-black/75 backdrop-blur-md text-indigo-300 px-2 py-0.5 rounded-md text-[11px] font-mono font-bold">
+                      ⏰ {item.time}
+                    </div>
+                    <div className="absolute bottom-2.5 right-2.5 bg-indigo-600 text-white px-2 py-0.5 rounded-md text-[11px] font-bold">
+                      {item.room}
+                    </div>
+                  </div>
+
+                  {/* PASTDAGI MA'LUMOTLAR BO'LIMI */}
+                  <div className="p-3.5 flex-1 flex flex-col justify-between space-y-2 bg-slate-900/90">
+                    
+                    <div>
+                      {/* 2. FAN NOMI */}
+                      <h3 className="text-base font-bold text-white tracking-wide leading-snug line-clamp-1">
+                        {item.subject}
+                      </h3>
+
+                      {/* 3. O'QITUVCHI */}
+                      <p className="text-xs text-slate-400 mt-1 font-medium line-clamp-1">
+                        👨‍🏫 Ustoz: <span className="text-slate-200">{item.teacher}</span>
+                      </p>
+
+                      {/* 4. SPECIALIST */}
+                      <div className="mt-1.5">
+                        <span className="inline-block bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                          🎯 {item.specialist || "Kiritilmagan"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 5. UY ISHI */}
+                    <div className="bg-slate-950/80 border border-slate-800/80 p-2 rounded-xl">
+                      <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">📝 Uy ishi:</p>
+                      <p className="text-xs text-slate-300 line-clamp-2 mt-0.5 font-normal">
+                        {item.homework || "Vazifa yo'q"}
+                      </p>
+                    </div>
+
+                    {/* 6. ENG TAGIDA: DARS XOS TAYMERI VA TANAFFUS XABARI */}
+                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-center text-[11px] font-semibold text-center">
+                      <span className={`w-full py-1 px-2 rounded border text-[10px] ${status.color}`}>
+                        {status.text}
+                      </span>
+                    </div>
+
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ADMIN TAHRIRLASH MODAL OYNASI */}
+          {editingItem && (
+            <div className="modal-overlay" onClick={() => setEditingItem(null)}>
+              <div 
+                className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-6 relative space-y-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="text-lg font-bold text-white">✏️ Darsni Tahrirlash</h3>
+                
+                <form onSubmit={handleSaveEdit} className="space-y-3 text-xs">
+                  <div>
+                    <label className="text-slate-400 font-bold block mb-1">Fan nomi:</label>
+                    <input 
+                      type="text" 
+                      value={editingItem.subject} 
+                      onChange={(e) => setEditingItem({...editingItem, subject: e.target.value})}
+                      className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-lg text-white font-medium"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-slate-400 font-bold block mb-1">Boshlanishi (HH:MM):</label>
+                      <input 
+                        type="text" 
+                        value={editingItem.start || "08:30"} 
+                        onChange={(e) => setEditingItem({...editingItem, start: e.target.value})}
+                        className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-lg text-white font-medium"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-400 font-bold block mb-1">Tugashi (HH:MM):</label>
+                      <input 
+                        type="text" 
+                        value={editingItem.end || "09:15"} 
+                        onChange={(e) => setEditingItem({...editingItem, end: e.target.value})}
+                        className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-lg text-white font-medium"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-slate-400 font-bold block mb-1">O'qituvchi:</label>
+                    <input 
+                      type="text" 
+                      value={editingItem.teacher} 
+                      onChange={(e) => setEditingItem({...editingItem, teacher: e.target.value})}
+                      className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-lg text-white font-medium"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-slate-400 font-bold block mb-1">Specialist:</label>
+                    <input 
+                      type="text" 
+                      value={editingItem.specialist} 
+                      onChange={(e) => setEditingItem({...editingItem, specialist: e.target.value})}
+                      className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-lg text-white font-medium"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-slate-400 font-bold block mb-1">Xona raqami:</label>
+                    <input 
+                      type="text" 
+                      value={editingItem.room} 
+                      onChange={(e) => setEditingItem({...editingItem, room: e.target.value})}
+                      className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-lg text-white font-medium"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-slate-400 font-bold block mb-1">Uy ishi:</label>
+                    <textarea 
+                      rows="3"
+                      value={editingItem.homework} 
+                      onChange={(e) => setEditingItem({...editingItem, homework: e.target.value})}
+                      className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-lg text-white font-medium"
+                    ></textarea>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button 
+                      type="submit" 
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-lg"
+                    >
+                      Saqlash
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setEditingItem(null)}
+                      className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-lg"
+                    >
+                      Bekor qilish
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
